@@ -5,6 +5,8 @@
     - [pantograph](https://github.com/adicu/pantograph)
     - numpy
 
+- The point and rectangle classes are from: https://wiki.python.org/moin/PointsAndRectangles
+
 - To run, make sure numpy and pantgraph are installed.
     - `pip install numpy`
     - `pip install pantograph`

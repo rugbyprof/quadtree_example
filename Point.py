@@ -17,6 +17,8 @@ class Point:
 @method: move_to_xy     -- move (in place) +dx, +dy
 @method: rotate         -- rotate around the origin
 @method: rotate_about   -- rotate around another point
+
+source: https://wiki.python.org/moin/PointsAndRectangles
 """
 class Point(object):
 
