@@ -182,7 +182,7 @@ class Ball():
 
         return True
 
-    def yInBounds(self,bounds,y):
+    def _yInBounds(self,bounds,y):
         if y >= bounds.maxY or y <= bounds.minY:
             return False
 

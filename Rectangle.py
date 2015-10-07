@@ -22,6 +22,8 @@ Class Rect:
 @method: top_left       -- get top-left corner
 @method: bottom_right   -- get bottom-right corner
 @method: expanded_by    -- grow (or shrink)
+
+source: https://wiki.python.org/moin/PointsAndRectangles
 """
 class Rectangle:
 
