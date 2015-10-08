@@ -164,8 +164,10 @@ class Ball():
         #If it's not, then change direction
         if not self._xInBounds(bounds,x):
             self.vectorOps.dx *= -1
+            self._change_bearing(math.pi/2)
         if not self._yInBounds(bounds,y):
             self.vectorOps.dy *= -1
+            self._change_bearing(math.pi/2)
 
         # Move any way because If we hit boundaries then we'll
         # go in the other direction.
@@ -188,6 +190,12 @@ class Ball():
             return False
 
         return True
+
+    """
+    Change Bearing
+    """
+    def _change_bearing(self,change):
+        self.bearing = (self.bearing + change) % (2 * math.pi)
 
     def changeSpeed(self,new_velocity):
         self.dest = self.destination(100,self.bearing)
@@ -256,8 +264,11 @@ class Driver(pantograph.PantographHandler):
         for i in range(self.numBalls):
 
             speed = random.choice(self.BallSpeeds)
-
-            r = Ball(self.getRandomPosition(),self.BallSize,speed,"#F00")
+            if i == 0:
+                color = "#00F"
+            else:
+                color = "#F00"
+            r = Ball(self.getRandomPosition(),self.BallSize,speed,color)
             self.Balls.append(r)
             self.qt.insert(r)
 
@@ -332,10 +343,12 @@ class Driver(pantograph.PantographHandler):
     Shift Dbl Click will slow balls down by same factor
     """
     def on_key_down(self,InputEvent):
+        # User hits the UP arrow
         if InputEvent.key_code == 38:
+            print self.Balls[0].bearing
             for r in self.Balls:
-                print r.velocity
                 r.changeSpeed(r.velocity * 1.25)
+        # User hits the DOWN arrow
         if InputEvent.key_code == 40:
             pass
 
