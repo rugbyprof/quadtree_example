@@ -136,7 +136,8 @@ class Ball():
         self.x = center.x
         self.y = center.y
         self.center = center
-        self.dest = self.destination(100,math.radians(random.randint(0,360)))
+        self.bearing = math.radians(random.randint(0,360))
+        self.dest = self.destination(100,self.bearing)
         self.vectorOps = VectorOps(self.center,self.dest,self.velocity)
         self.color = color
 
@@ -188,6 +189,11 @@ class Ball():
 
         return True
 
+    def changeSpeed(self,new_velocity):
+        self.dest = self.destination(100,self.bearing)
+        self.velocity = new_velocity
+        self.vectorOps = VectorOps(self.center,self.dest,self.velocity)
+
     """
     @returns a tuple (x, y)
     """
@@ -238,13 +244,14 @@ class Driver(pantograph.PantographHandler):
     """
     def setup(self):
         self.bounds = Bounds(0,0,self.width,self.height)
-        self.BallSpeeds = np.arange(1,15,1)
+        self.BallSpeeds = np.arange(1,4,1)
         self.numBalls = 50
         self.qt = PointQuadTree(Rectangle(Point(0,0),Point(self.width,self.height)),1)
         self.BallSize = 5
         self.halfSize = self.BallSize / 2
         self.Balls = []
         self.boxes = []
+        self.freeze = False
 
         for i in range(self.numBalls):
 
@@ -258,7 +265,8 @@ class Driver(pantograph.PantographHandler):
     Runs the animation. Update happens every ? milliseconds. Its not to bad.
     """
     def update(self):
-        self.moveBalls()
+        if not self.freeze:
+            self.moveBalls()
         self.clear_rect(0, 0, self.width, self.height)
         self.drawBalls()
         self.drawBoxes();
@@ -310,6 +318,26 @@ class Driver(pantograph.PantographHandler):
             r.move(self.bounds)
             self.qt.insert(r)
 
+    """
+    Toggles movement on and off
+    """
+    def on_click(self,InputEvent):
+        if self.freeze == False:
+            self.freeze = True
+        else:
+            self.freeze = False
+
+    """
+    Dbl Click will speed balls up by some factor
+    Shift Dbl Click will slow balls down by same factor
+    """
+    def on_key_down(self,InputEvent):
+        if InputEvent.key_code == 38:
+            for r in self.Balls:
+                print r.velocity
+                r.changeSpeed(r.velocity * 1.25)
+        if InputEvent.key_code == 40:
+            pass
 
 if __name__ == '__main__':
     app = pantograph.SimplePantographApplication(Driver)
