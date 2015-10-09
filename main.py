@@ -164,10 +164,10 @@ class Ball():
         #If it's not, then change direction
         if not self._xInBounds(bounds,x):
             self.vectorOps.dx *= -1
-            self._change_bearing(math.pi/2)
+            self._change_bearing(math.pi)
         if not self._yInBounds(bounds,y):
             self.vectorOps.dy *= -1
-            self._change_bearing(math.pi/2)
+
 
         # Move any way because If we hit boundaries then we'll
         # go in the other direction.
