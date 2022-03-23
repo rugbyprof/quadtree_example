@@ -4,9 +4,9 @@ import math
 class Point(object):
     """
     class Point:
-    
+
         A point identified by (x,y) coordinates.
-    
+
     @operations: +, -, *, /, str, repr
     @method: length         -- calculate length of vector to point from origin
     @method: distance_to    -- calculate distance between two points
@@ -19,50 +19,54 @@ class Point(object):
     @method: move_to_xy     -- move (in place) +dx, +dy
     @method: rotate         -- rotate around the origin
     @method: rotate_about   -- rotate around another point
-    
+
     source: https://wiki.python.org/moin/PointsAndRectangles
     """
-    def __init__(self, x=0.0, y=0.0):
+
+    def __init__(self, x=0.0, y=0.0, data=None):
         self.x = float(x)
         self.y = float(y)
 
+        self.data = data
 
     def __add__(self, p):
         """
         @returns Point(x1+x2, y1+y2)
         """
-        return Point(self.x+p.x, self.y+p.y)
-
+        return Point(self.x + p.x, self.y + p.y)
 
     def __sub__(self, p):
         """
         @returns Point(x1-x2, y1-y2)
         """
-        return Point(self.x-p.x, self.y-p.y)
+        return Point(self.x - p.x, self.y - p.y)
 
-
-    def __mul__( self, scalar ):
+    def __mul__(self, scalar):
         """
         Point(x1*x2, y1*y2)
         """
-        return Point(self.x*scalar, self.y*scalar)
-
+        return Point(self.x * scalar, self.y * scalar)
 
     def __div__(self, scalar):
         """
         Point(x1/x2, y1/y2)
         """
-        return Point(self.x/scalar, self.y/scalar)
+        return Point(self.x / scalar, self.y / scalar)
 
     def __str__(self):
-        return "(%s, %s)" % (self.x, self.y)
+        if self.data:
+            return f"({self.x}, {self.y}, {self.data})"
+        else:
+            return f"({self.x}, {self.y})"
 
     def __repr__(self):
-        return "%s(%r, %r)" % (self.__class__.__name__, self.x, self.y)
+        if self.data:
+            return f"{self.__class__.__name__}, ({self.x}, {self.y}, {self.data})"
+        else:
+            return f"{self.__class__.__name__}, ({self.x}, {self.y})"
 
     def length(self):
         return math.sqrt(self.x**2 + self.y**2)
-
 
     def distance_to(self, p):
         """
@@ -71,20 +75,17 @@ class Point(object):
         """
         return (self - p).length()
 
-
     def as_tuple(self):
         """
         @returns a tuple (x, y)
         """
         return (self.x, self.y)
 
-
     def clone(self):
         """
         Return a full copy of this point.
         """
         return Point(self.x, self.y)
-
 
     def integerize(self):
         """
@@ -94,7 +95,6 @@ class Point(object):
         self.x = int(self.x)
         self.y = int(self.y)
 
-
     def floatize(self):
         """
         Convert co-ordinate values to floats.
@@ -103,14 +103,12 @@ class Point(object):
         self.x = float(self.x)
         self.y = float(self.y)
 
-
     def move_to(self, x, y):
         """
         Moves / sets point to x,y .
         """
         self.x = x
         self.y = y
-
 
     def goto_point(self, p):
         """
@@ -119,7 +117,6 @@ class Point(object):
         self.x = self.x + p.x
         self.y = self.y + p.y
 
-
     def move_to_xy(self, dx, dy):
         """
         Move to new (x+dx,y+dy).
@@ -127,30 +124,28 @@ class Point(object):
         self.x = self.x + dx
         self.y = self.y + dy
 
-
     def rotate(self, rad):
         """
         Rotate counter-clockwise by rad radians.
-    
+
         Positive y goes *up,* as in traditional mathematics.
-    
+
         Interestingly, you can use this in y-down computer graphics, if
         you just remember that it turns clockwise, rather than
         counter-clockwise.
-    
+
         The new position is returned as a new Point.
         """
         s, c = [f(rad) for f in (math.sin, math.cos)]
-        x, y = (c*self.x - s*self.y, s*self.x + c*self.y)
-        return Point(x,y)
-
+        x, y = (c * self.x - s * self.y, s * self.x + c * self.y)
+        return Point(x, y)
 
     def rotate_about(self, p, theta):
         """
         Rotate counter-clockwise around a point, by theta degrees.
-    
+
         Positive y goes *up,* as in traditional mathematics.
-    
+
         The new position is returned as a new Point.
         """
         result = self.clone()
@@ -159,8 +154,8 @@ class Point(object):
         result.slide(p.x, p.y)
         return result
 
-    def set_direction(self,direction):
-        assert direction in ['N','NE','E','SE','S','SW','W','NW']
+    def set_direction(self, direction):
+        assert direction in ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
 
         self.direction = direction
 
@@ -186,6 +181,7 @@ class Point(object):
             self.y -= 1
             self.x -= 1
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     p = Point()
-    print p
+    print(p)
