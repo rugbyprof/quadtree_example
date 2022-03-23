@@ -4,21 +4,20 @@ import numpy as np
 import time
 from pointQuadTree import *
 from Rectangle import *
-import pantograph
+import pygame
 
 
-"""
-A vector can be determined from a single point when basing
-it from the origin (0,0), but I'm going to assume 2 points.
-Example:
-    AB = Vector(Point(3,4),Point(6,7))
 
-or if you want to use the origin
-
-    AB = Vector(Point(0,0),Point(8,4))
-
-"""
 class Vector(object):
+    """A vector can be determined from a single point when basing
+    it from the origin (0,0), but I'm going to assume 2 points.
+    Example:
+        AB = Vector(Point(3,4),Point(6,7))
+    
+    or if you want to use the origin
+    
+        AB = Vector(Point(0,0),Point(8,4))
+    """
     def __init__(self,p1,p2):
         assert not p1 == None
         assert not p2 == None
@@ -33,17 +32,16 @@ class Vector(object):
     def __repr__(self):
         return "[\n p1: %s,\n p2: %s,\n vector: %s,\n a: %s,\nb: %s\n]" % (self.p1, self.p2, self.v,self.a,self.b)
 
-"""
-VectorOps give the ability to apply some simple movement to an object.
 
-@method: _bearing       -- private method to give the bearing going from p1 -> p2
-@method: _magnitude     -- length in this context
-@method: _step          -- a "motion vector" (not correct term) to apply to point p1
-                           that will "step" it towards p2. The size of the "step" is
-                           based on the velocity.
-
-"""
 class VectorOps(object):
+    """VectorOps give the ability to apply some simple movement to an object.
+    
+    @method: _bearing       -- private method to give the bearing going from p1 -> p2
+    @method: _magnitude     -- length in this context
+    @method: _step          -- a "location change vector" (not correct term) to apply to point p1
+                               that will "step" it towards p2. The size of the "step" is
+                               based on the velocity.
+    """
     def __init__(self,p1=None,p2=None,velocity=1):
         self.p1 = p1
         self.p2 = p2
@@ -97,38 +95,39 @@ class VectorOps(object):
     def __repr__(self):
         return "[\n vector: %s,\n velocity: %s,\n bearing: %s,\n magnitude: %s\n, step: %s\n]" % (self.v, self.velocity, self.bearing,self.magnitude,self.step)
 
-"""
-Ball is an extension of a point. It doesn't truly "extend" the point class but it
-probably should have! Having said that, I probably should extend the VectorOps class
-as well.
 
-@method: destination       -- private method to give the bearing going from p1 -> p2
-@method: move              -- length in this context
-@method: xInBounds         -- Helper class to check ... I'll let you guess
-@method: yInBounds         -- Same as previous just vertically :)
-
-This class is used as follows:
-
-Given a point, p1, I want to move it somewhere, anywhere. So I do the following:
-
-1) Create a random point somewhere else on the screen / world / board:
-        distance = 100
-        degrees = math.radians(random.randint(0,360))
-        p2 = destination(distance,degrees)
-
-2) Now I can calculate a vector between P1 and P2 at a given velocity (scalar value
-    to adjust speed)
-
-        velocity = random.randint(1,MaxSpeed) # 1-15 or 20
-        vectorOps = VectorOps(p1,p2,velocity)
-
-3) Finally I have a "step" (or incorrectly coined as a motion vector) that as applied to
-    p1 will move it toward p2 at the given step.
-
-        p1.x += vectorOps.dx
-        p1.y += vectorOps.dy
-"""
 class Ball():
+    """
+    Ball is an extension of a point. It doesn't truly "extend" the point class but it
+    probably should have! Having said that, I probably should extend the VectorOps class
+    as well.
+    
+    @method: destination       -- private method to give the bearing going from p1 -> p2
+    @method: move              -- length in this context
+    @method: xInBounds         -- Helper class to check ... I'll let you guess
+    @method: yInBounds         -- Same as previous just vertically :)
+    
+    This class is used as follows:
+    
+    Given a point, p1, I want to move it somewhere, anywhere. So I do the following:
+    
+    1) Create a random point somewhere else on the screen / world / board:
+            distance = 100
+            degrees = math.radians(random.randint(0,360))
+            p2 = destination(distance,degrees)
+    
+    2) Now I can calculate a vector between P1 and P2 at a given velocity (scalar value
+        to adjust speed)
+    
+            velocity = random.randint(1,MaxSpeed) # 1-15 or 20
+            vectorOps = VectorOps(p1,p2,velocity)
+    
+    3) Finally I have a "step" (or incorrectly coined as a motion vector) that as applied to
+        p1 will move it toward p2 at the given step.
+    
+            p1.x += vectorOps.dx
+            p1.y += vectorOps.dy
+    """
     def __init__(self, center, radius,velocity=1,color="#000"):
         self.center = center
         self.radius = radius
@@ -215,11 +214,12 @@ class Ball():
     def __repr__(self):
         return "[\n center: %s,\n radius: %s,\n vector: %s,\n speed: %s\n ]" % (self.center, self.radius, self.vectorOps,self.velocity)
 
-"""
-A class more or so to put all the boundary values together. Friendlier than
-using a map type.
-"""
+
 class Bounds(object):
+    """
+    A class more or so to put all the boundary values together. Friendlier than
+    using a map type.
+    """
     def __init__(self,minx,miny,maxx,maxy):
         self.minX = minx
         self.minY = miny
@@ -229,28 +229,18 @@ class Bounds(object):
         return "[%s %s %s %s]" % (self.minX, self.minY, self.maxX,self.maxY)
 
 
-"""
-The driver class that extends the Pantograph class that creates the html 5
-canvas animations.
 
-If you run this file from the command line "python visualizeQuadtree.py"
-Pantograph will start a local server running at address: http://127.0.0.1:8080
-Simply place "http://127.0.0.1:8080" in the address bar of a browser and hit enter.
-
-Dependencies:
-
-    Pantograph:
-        pip install pantograph
-    Numpy
-    Point
-    Rectangle
-"""
-class Driver(pantograph.PantographHandler):
-
+class Driver():
     """
-    Sets up canvas, generates balls, etc.
+    The driver class that uses pygame
+    
+    Dependencies:
+        pygame
+        Numpy
+        Point
+        Rectangle
     """
-    def setup(self):
+    def __init__(self):
         self.bounds = Bounds(0,0,self.width,self.height)
         self.BallSpeeds = np.arange(1,4,1)
         self.numBalls = 50
@@ -283,66 +273,74 @@ class Driver(pantograph.PantographHandler):
         self.drawBoxes();
         #time.sleep(.5)
 
-    """
-    Not Implemented fully. The goal is to use the quadtree to check to see which
-    balls collide, then change direction.
-    """
-    def checkCollisions(self,r):
-        box = Rectangle(Point(r.center.x-self.halfSize,r.center.y-self.halfSize),Point(r.center.x+self.halfSize,r.center.y+self.halfSize))
-        boxes  = self.qt.searchBox(box)
-        boxes.sort(key=lambda tup: tup[1],reverse=True)
-        #print boxes
-        #print
 
-    """
-    Generate some random point somewhere within the bounds of the canvas.
-    """
+    def checkCollisions(self,r):
+        """
+        Not Implemented fully. The goal is to use the quadtree to check to see which
+        balls collide, then change direction.
+        """
+        # box = Rectangle(Point(r.center.x-self.halfSize,r.center.y-self.halfSize),Point(r.center.x+self.halfSize,r.center.y+self.halfSize))
+        # boxes  = self.qt.searchBox(box)
+        # boxes.sort(key=lambda tup: tup[1],reverse=True)
+        # #print boxes
+        # #print
+        pass
+
+
     def getRandomPosition(self):
+        """
+        Generate some random point somewhere within the bounds of the canvas.
+        """
         x = random.randint(0+self.BallSize,int(self.width)-self.BallSize)
         y = random.randint(0+self.BallSize,int(self.height)-self.BallSize)
         return Point(x,y)
 
 
-    """
-    Draw the bounding boxes fetched from the quadtree
-    """
+
     def drawBoxes(self):
+        """
+        Draw the bounding boxes fetched from the quadtree
+        """
         boxes = self.qt.getBBoxes()
         for box in boxes:
             self.draw_rect(box.left,box.top,box.w,box.h)
 
-    """
-    Draw the balls :)
-    """
+
     def drawBalls(self):
+        """
+        Draw the balls :)
+        """
         for r in self.Balls:
             self.fill_circle(r.x,r.y,r.radius,r.color)
 
-    """
-    Moves the balls by applying my super advanced euclidian based geometric
-    vector functions to my balls. By super advanced I mean ... not.
-    """
+
     def moveBalls(self):
+        """
+        Moves the balls by applying my super advanced euclidian based geometric
+        vector functions to my balls. By super advanced I mean ... not.
+        """
         self.qt = PointQuadTree(Rectangle(Point(0,0),Point(self.width,self.height)),1)
         for r in self.Balls:
             self.checkCollisions(r)
             r.move(self.bounds)
             self.qt.insert(r)
 
-    """
-    Toggles movement on and off
-    """
+
     def on_click(self,InputEvent):
+        """
+        Toggles movement on and off
+        """
         if self.freeze == False:
             self.freeze = True
         else:
             self.freeze = False
 
-    """
-    Dbl Click will speed balls up by some factor
-    Shift Dbl Click will slow balls down by same factor
-    """
+
     def on_key_down(self,InputEvent):
+        """
+        Dbl Click will speed balls up by some factor
+        Shift Dbl Click will slow balls down by same factor
+        """
         # User hits the UP arrow
         if InputEvent.key_code == 38:
             print self.Balls[0].bearing
@@ -353,5 +351,4 @@ class Driver(pantograph.PantographHandler):
             pass
 
 if __name__ == '__main__':
-    app = pantograph.SimplePantographApplication(Driver)
-    app.run()
+   pass

@@ -17,10 +17,10 @@ class PointQuadTree(object):
     def __str__(self):
         return "\nnorthwest: %s,\nnorthEast: %s,\nsouthWest: %s,\nsouthEast: %s,\npoints: %s,\nbbox: %s,\nmaxPoints: %s,\nparent: %s" % (self.northWest, self.northEast,self.southWest, self.southEast,self.points,self.bbox,self.maxPoints,self.parent)
 
-    """
-    Insert a new point into this QuadTree node
-    """
     def insert(self,point):
+        """
+        Insert a new point into this QuadTree node
+        """
         if not self.bbox.contains(point):
             #print "Point %s is not inside bounding box %s" % (point,self.bbox)
             return False
@@ -42,10 +42,11 @@ class PointQuadTree(object):
         # If we couldn't insert the new point, then we have an exception situation
         raise ValueError("Point %s is outside bounding box %s" % (point,self.bbox))
 
-    """
-     Split this QuadTree node into four quadrants for NW/NE/SE/SW
-    """
+
     def subdivide(self):
+        """
+         Split this QuadTree node into four quadrants for NW/NE/SE/SW
+        """
         l = self.bbox.left
         r = self.bbox.right
         t = self.bbox.top
@@ -58,12 +59,11 @@ class PointQuadTree(object):
         self.northWest = PointQuadTree(Rectangle(Point(l,t),Point(mX,mY)),self.maxPoints,self.parent+1)
 
 
-    """
-     Return an array of all points within this QuadTree and its child nodes that fall
-     within the specified bounding box
-    """
-    def searchBox(self,bbox):
 
+    def searchBox(self,bbox):
+        """Return an array of all points within this QuadTree and its child nodes that fall
+           within the specified bounding box
+        """
         results = []
 
         if self.bbox.overlaps(bbox) or self.bbox.encompasses(bbox):
@@ -85,11 +85,10 @@ class PointQuadTree(object):
 
         return results
 
-    """
-     Returns the containers points that are in the same container as another point.
-    """
-    def searchNeighbors(self,point):
 
+    def searchNeighbors(self,point):
+        """Returns the containers points that are in the same container as another point.
+        """
         #If its not a point (its a bounding rectangle)
         if not hasattr(point, 'x'):
             return []
@@ -115,10 +114,10 @@ class PointQuadTree(object):
 
         return results
 
-    """
-    Print helper to draw tree
-    """
+
     def getBBoxes(self):
+        """Print helper to draw tree
+        """
         bboxes = []
 
         bboxes.append(self.bbox)
