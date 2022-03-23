@@ -1,4 +1,4 @@
-# Quadtree Example
+dfel # Quadtree Example
 
 -   Quadtree example using pygame
 -   Requires:

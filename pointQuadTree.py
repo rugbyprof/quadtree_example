@@ -1,5 +1,5 @@
-from xml.sax import handler
-from matplotlib.cbook import index_of
+# from xml.sax import handler
+# from matplotlib.cbook import index_of
 from rich import print
 from point import Point
 from rectangle import *
