@@ -1,7 +1,10 @@
+from xml.sax import handler
+from matplotlib.cbook import index_of
 from rich import print
 from point import Point
 from rectangle import *
 from random import random
+from random import choice
 
 
 class PointQuadTree(object):
@@ -149,19 +152,109 @@ class PointQuadTree(object):
         return bboxes
 
 
+def drawPoints(screen, points):
+    for p in points:
+        pygame.draw.circle(screen, (255, 255, 255), [p.x, p.y], 2)
+
+
+def updatePoints(points, width, height):
+
+    old = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+    new = ["S", "SW", "W", "NW", "N", "NE", "E", "SE"]
+
+    dx = 3
+    dy = 3
+    for p in points:
+        # p.update_position()
+        d = list(p.direction)
+        # print("+" * 20)
+        # print(d)
+        if p.x > width or p.x < 0:
+            i = p.direction.find("E")
+            if i >= 0:
+                d[i] = "W"
+
+            i = p.direction.find("W")
+            if i >= 0:
+                d[i] = "E"
+        if p.y > height or p.y < 0:
+            i = p.direction.find("N")
+            if i >= 0:
+                d[i] = "S"
+
+            i = p.direction.find("S")
+            if i >= 0:
+                d[i] = "N"
+
+        p.direction = "".join(d)
+        # print(p.direction)
+        # print("-" * 20)
+
+        p.update_position()
+        # pygame.draw.circle(screen, (255, 255, 255), [p.x, p.y], 2)
+
+
+def drawRects(screen, rects):
+    """left, top, width, height"""
+    for r in rects:
+        l = r.left
+        t = r.top
+        w = r.w
+        h = r.h
+        pygame.draw.rect(screen, (255, 0, 0), pygame.Rect(l, t, w, h), 1)
+
+
 if __name__ == "__main__":
-    width = 500
-    height = 500
-    maxPoints = 1000
+    import pygame
+
+    dPoints = []
+    dRects = []
+
+    pygame.init()
+    width, height = (1024, 768)
+    screen = pygame.display.set_mode((width, height))
+    done = False
+    clock = pygame.time.Clock()
+
+    width = 1024
+    height = 768
+    maxPoints = 500
+
     bbox = Rectangle(Point(0, 0), Point(width, height))
-    qt = PointQuadTree(bbox, 50, parent=0)
-    for i in range(maxPoints):
+    qt = PointQuadTree(bbox, 5, parent=0)
+
+    dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+
+    id = 0
+    # while id < maxPoints:
+
+    while not done:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                done = True
+
         x = int(width * random())
         y = int(height * random())
-        p = Point(x, y, i)
+        p = Point(x, y, id)
+        p.set_dx_dy(3, 3)
+        p.set_direction(choice(dirs))
         qt.insert(p)
-        print(p)
-    print(qt)
-    res = qt.searchNeighbors(Point(70.0, 311.0))
-    print(res)
-    print(len(res))
+        dPoints.append(p)
+        id += 1
+
+        bboxes = qt.getBBoxes()
+
+        screen.fill((0, 0, 0))
+        updatePoints(dPoints, width, height)
+        drawPoints(screen, dPoints)
+        drawRects(screen, bboxes)
+
+        # print(bboxes)
+
+        pygame.display.flip()
+        clock.tick(60)
+
+    # print(qt)
+    # res = qt.searchNeighbors(Point(70.0, 311.0))
+    # print(res)
+    # print(len(res))

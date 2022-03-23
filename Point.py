@@ -1,4 +1,7 @@
 import math
+from random import choice
+
+dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
 
 
 class Point(object):
@@ -27,7 +30,12 @@ class Point(object):
         self.x = float(x)
         self.y = float(y)
 
+        self.dx = 1
+        self.dy = 1
+
         self.data = data
+
+        self.direction = choice(dirs)
 
     def __add__(self, p):
         """
@@ -67,6 +75,13 @@ class Point(object):
 
     def length(self):
         return math.sqrt(self.x**2 + self.y**2)
+
+    def set_dx_dy(self, dx, dy):
+        """
+        Change the speed of movement
+        """
+        self.dx = dx
+        self.dy = dy
 
     def distance_to(self, p):
         """
@@ -161,25 +176,25 @@ class Point(object):
 
     def update_position(self):
         if self.direction == "N":
-            self.y -= 1
+            self.y -= self.dy
         if self.direction == "NE":
-            self.y -= 1
-            self.x += 1
+            self.y -= self.dy
+            self.x += self.dx
         if self.direction == "E":
-            self.x += 1
+            self.x += self.dx
         if self.direction == "SE":
-            self.x += 1
-            self.y += 1
+            self.x += self.dx
+            self.y += self.dy
         if self.direction == "S":
-            self.y += 1
+            self.y += self.dy
         if self.direction == "SW":
-            self.x -= 1
-            self.y += 1
+            self.x -= self.dx
+            self.y += self.dy
         if self.direction == "W":
-            self.x -= 1
+            self.x -= self.dx
         if self.direction == "NW":
-            self.y -= 1
-            self.x -= 1
+            self.y -= self.dy
+            self.x -= self.dx
 
 
 if __name__ == "__main__":
