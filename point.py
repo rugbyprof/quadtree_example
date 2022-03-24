@@ -1,8 +1,6 @@
 import math
 from random import choice
 
-dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
-
 
 class Point(object):
     """
@@ -12,30 +10,30 @@ class Point(object):
 
     @operations: +, -, *, /, str, repr
     @method: length         -- calculate length of vector to point from origin
-    @method: distance_to    -- calculate distance between two points
-    @method: as_tuple       -- construct tuple (x,y)
+    @method: distanceTo     -- calculate distance between two points
+    @method: asTuple        -- construct tuple (x,y)
     @method: clone          -- construct a duplicate
-    @method: integerize     -- convert x & y to integers
-    @method: floatize       -- convert x & y to floats
-    @method: move_to        -- reset x & y
-    @method: goto_point     -- move (in place) +dx, +dy, as spec'd by point
-    @method: move_to_xy     -- move (in place) +dx, +dy
+    @method: castInt        -- convert x & y to integers
+    @method: castFloat      -- convert x & y to floats
+    @method: jumpTo         -- reset x & y
+    @method: gotoPoint      -- move (in place) +dx, +dy, as spec'd by point
+    @method: shiftDxDy      -- move (in place) +dx, +dy
     @method: rotate         -- rotate around the origin
-    @method: rotate_about   -- rotate around another point
+    @method: rotateAbout    -- rotate around another point
 
     source: https://wiki.python.org/moin/PointsAndRectangles
     """
 
-    def __init__(self, x=0.0, y=0.0, data=None):
-        self.x = float(x)
-        self.y = float(y)
+    def __init__(self, *args, **kwargs):
 
-        self.dx = 1
-        self.dy = 1
+        if len(args) == 2:
+            self.x = args[0]
+            self.y = args[1]
+        else:
+            self.x = kwargs.get("x", 0.0)
+            self.y = kwargs.get("y", 0.0)
 
-        self.data = data
-
-        self.direction = choice(dirs)
+        self.data = kwargs.get("data", {})
 
     def __add__(self, p):
         """
@@ -53,7 +51,7 @@ class Point(object):
         """
         Point(x1*x2, y1*y2)
         """
-        return Point(self.x * scalar, self.y * scalar)
+        return Point(self.x * float(scalar), self.y * float(scalar))
 
     def __div__(self, scalar):
         """
@@ -62,86 +60,102 @@ class Point(object):
         return Point(self.x / scalar, self.y / scalar)
 
     def __str__(self):
-        if self.data:
-            return f"({self.x}, {self.y}, {self.data})"
-        else:
-            return f"({self.x}, {self.y})"
+        return self.__repr__()
 
     def __repr__(self):
-        if self.data:
-            return f"{self.__class__.__name__}, ({self.x}, {self.y}, {self.data})"
-        else:
-            return f"{self.__class__.__name__}, ({self.x}, {self.y})"
+        return f"{self.__class__.__name__}(x:{self.x} y:{self.y} data:{self.data})"
 
     def length(self):
-        return math.sqrt(self.x**2 + self.y**2)
+        return math.sqrt(self.x ** 2 + self.y ** 2)
 
-    def set_dx_dy(self, dx, dy):
-        """
-        Change the speed of movement
-        """
-        self.dx = dx
-        self.dy = dy
+    # def setDxDy(self, dx, dy):
+    #     """
+    #     Change the speed of movement
+    #     """
+    #     self.dx = dx
+    #     self.dy = dy
 
-    def distance_to(self, p):
+    def distanceTo(self, other):
+        """Calculate the distance between two points.
+        Params:
+            other (Point)
+        Returns:
+            distance (float)
         """
-        Calculate the distance between two points.
-        @returns distance
-        """
-        return (self - p).length()
+        return (self - other).length()
 
-    def as_tuple(self):
-        """
-        @returns a tuple (x, y)
+    def asTuple(self):
+        """Pull out x and y
+        Params:
+            other (Point)
+        Returns:
+            (x,y) (tuple)
         """
         return (self.x, self.y)
 
     def clone(self):
+        """Return a full copy of this point.
+        Params:
+            None
+        Returns:
+            self (Point)
         """
-        Return a full copy of this point.
-        """
-        return Point(self.x, self.y)
+        return Point(x=self.x, y=self.y)
 
-    def integerize(self):
-        """
-        Convert co-ordinate values to integers.
-        @returns Point(int(x),int(y))
+    def castInt(self):
+        """Convert co-ordinate values to integers
+        Params:
+            None
+        Returns:
+            None
         """
         self.x = int(self.x)
         self.y = int(self.y)
 
-    def floatize(self):
-        """
-        Convert co-ordinate values to floats.
-        @returns Point(float(x),float(y))
+    def castFloat(self):
+        """Convert co-ordinate values to floats
+        Params:
+            None
+        Returns:
+            None
         """
         self.x = float(self.x)
         self.y = float(self.y)
 
-    def move_to(self, x, y):
-        """
-        Moves / sets point to x,y .
+    def jumpTo(self, x, y):
+        """Jumps to new position.
+        Params:
+            x (int)
+            y (int)
+        Returns:
+            None
         """
         self.x = x
         self.y = y
 
-    def goto_point(self, p):
+    def gotoPoint(self, other):
+        """Add points coords to current coords.
+        Params:
+            other (Point)
+        Returns:
+            None
         """
-        Move to new (x+dx,y+dy).
-        """
-        self.x = self.x + p.x
-        self.y = self.y + p.y
+        self.x = self.x + other.x
+        self.y = self.y + other.y
 
-    def move_to_xy(self, dx, dy):
-        """
-        Move to new (x+dx,y+dy).
+    def shiftDxDy(self, dx, dy):
+        """Shift by dx and dy (x+dx,y+dy).
+        Params:
+            dx (int)
+            dy (int)
+        Returns:
+            None
         """
         self.x = self.x + dx
         self.y = self.y + dy
 
     def rotate(self, rad):
-        """
-        Rotate counter-clockwise by rad radians.
+        """Rotate counter-clockwise by rad radians.
 
         Positive y goes *up,* as in traditional mathematics.
 
@@ -153,9 +167,9 @@ class Point(object):
         """
         s, c = [f(rad) for f in (math.sin, math.cos)]
         x, y = (c * self.x - s * self.y, s * self.x + c * self.y)
-        return Point(x, y)
+        return Point(x=x, y=y)
 
-    def rotate_about(self, p, theta):
+    def rotateAbout(self, p, theta):
         """
         Rotate counter-clockwise around a point, by theta degrees.
 
@@ -169,34 +183,17 @@ class Point(object):
         result.slide(p.x, p.y)
         return result
 
-    def set_direction(self, direction):
-        assert direction in ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
-
-        self.direction = direction
-
-    def update_position(self):
-        if self.direction == "N":
-            self.y -= self.dy
-        if self.direction == "NE":
-            self.y -= self.dy
-            self.x += self.dx
-        if self.direction == "E":
-            self.x += self.dx
-        if self.direction == "SE":
-            self.x += self.dx
-            self.y += self.dy
-        if self.direction == "S":
-            self.y += self.dy
-        if self.direction == "SW":
-            self.x -= self.dx
-            self.y += self.dy
-        if self.direction == "W":
-            self.x -= self.dx
-        if self.direction == "NW":
-            self.y -= self.dy
-            self.x -= self.dx
-
 
 if __name__ == "__main__":
-    p = Point()
-    print(p)
+    p1 = Point()
+    print(p1)
+    p2 = Point(5, 7)
+    print(p2)
+    p3 = Point(x=3, y=4)
+    print(p3)
+    p4 = p3 + p2
+    print(p4)
+    p1 = p4 * 3
+    print(p1)
+    p1.gotoPoint(Point(x=2, y=2))
+    print(p1)

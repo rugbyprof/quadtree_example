@@ -5,115 +5,7 @@ import time
 from pointQuadTree import *
 from rectangle import *
 import pygame
-
-
-class Vector(object):
-    """A vector can be determined from a single point when basing
-    it from the origin (0,0), but I'm going to assume 2 points.
-    Example:
-        AB = Vector(Point(3,4),Point(6,7))
-
-    or if you want to use the origin
-
-        AB = Vector(Point(0,0),Point(8,4))
-    """
-
-    def __init__(self, p1, p2):
-        assert not p1 == None
-        assert not p2 == None
-        self.p1 = p1
-        self.p2 = p2
-        self.v = [self.p1.x - self.p2.x, self.p1.y - self.p2.y]
-        self.a, self.b = self.v
-
-    def _str__(self):
-        return "[\n p1: %s,\n p2: %s,\n vector: %s,\n a: %s,\nb: %s\n]" % (
-            self.p1,
-            self.p2,
-            self.v,
-            self.a,
-            self.b,
-        )
-
-    def __repr__(self):
-        return "[\n p1: %s,\n p2: %s,\n vector: %s,\n a: %s,\nb: %s\n]" % (
-            self.p1,
-            self.p2,
-            self.v,
-            self.a,
-            self.b,
-        )
-
-
-class VectorOps(object):
-    """VectorOps give the ability to apply some simple movement to an object.
-
-    @method: _bearing       -- private method to give the bearing going from p1 -> p2
-    @method: _magnitude     -- length in this context
-    @method: _step          -- a "location change vector" (not correct term) to apply to point p1
-                               that will "step" it towards p2. The size of the "step" is
-                               based on the velocity.
-    """
-
-    def __init__(self, p1=None, p2=None, velocity=1):
-        self.p1 = p1
-        self.p2 = p2
-        self.dx = 0
-        self.dy = 0
-        if not self.p1 == None and not self.p2 == None:
-            self.v = Vector(p1, p2)
-            self.velocity = velocity
-            self.magnitude = self._magnitude()
-            self.bearing = self._bearing()
-            self.step = self._step()
-        else:
-            self.v = None
-            self.velocity = None
-            self.bearing = None
-            self.magnitude = None
-
-    def _bearing(self):
-        """
-        Calculate the bearing (in radians) between p1 and p2
-        """
-        dx = self.p2.x - self.p1.x
-        dy = self.p2.y - self.p1.y
-        rads = math.atan2(-dy, dx)
-        return rads % 2 * math.pi  # In radians
-        # degs = degrees(rads)
-
-    def _magnitude(self):
-        """
-        A vector by itself can have a magnitude when basing it on the origin (0,0),
-        but in this context we want to calculate magnitude (length) based on another
-        point (converted to a vector).
-        """
-        assert not self.v == None
-        return math.sqrt((self.v.a**2) + (self.v.b**2))
-
-    def _step(self):
-        """
-        Create the step factor between p1 and p2 to allow a point to
-        move toward p2 at some interval based on velocity. Greater velocity
-        means bigger steps (less granular).
-        """
-        cosa = math.sin(self.bearing)
-        cosb = math.cos(self.bearing)
-        self.dx = cosa * self.velocity
-        self.dy = cosb * self.velocity
-        return [cosa * self.velocity, cosb * self.velocity]
-
-    def _str__(self):
-        return (
-            "[\n vector: %s,\n velocity: %s,\n bearing: %s,\n magnitude: %s\n, step: %s\n]"
-            % (self.v, self.velocity, self.bearing, self.magnitude, self.step)
-        )
-
-    def __repr__(self):
-        return (
-            "[\n vector: %s,\n velocity: %s,\n bearing: %s,\n magnitude: %s\n, step: %s\n]"
-            % (self.v, self.velocity, self.bearing, self.magnitude, self.step)
-        )
+from vector import Vector
 
 
 class Ball:
@@ -158,7 +50,7 @@ class Ball:
         self.center = center
         self.bearing = math.radians(random.randint(0, 360))
         self.dest = self.destination(100, self.bearing)
-        self.vectorOps = VectorOps(self.center, self.dest, self.velocity)
+        self.vector = Vector(p1=self.center, p2=self.dest, velocity=self.velocity)
         self.color = color
 
     """
@@ -220,7 +112,7 @@ class Ball:
     def changeSpeed(self, new_velocity):
         self.dest = self.destination(100, self.bearing)
         self.velocity = new_velocity
-        self.vectorOps = VectorOps(self.center, self.dest, self.velocity)
+        self.vectorOps = Vector(p1=self.center, p2=self.dest, velocity=self.velocity)
 
     def as_tuple(self):
         """

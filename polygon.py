@@ -6,35 +6,39 @@ from rectangle import Rectangle
 
 
 class Polygon(object):
+    def __init__(self, *args, **kwargs):
+        """Initialize a polygon from list of points."""
+        self.points = []
+        self.mbr = None
 
-    """
-    Initialize a polygon from list of points.
-    """
+        # get list of points passed in ...
+        if len(args) == 1:
+            pts = args[0]
+        else:
+            pts = kwargs.get("points", [])
 
-    def __init__(self, pts=[], centroid=None):
+        self.centroid = kwargs.get("centroid", None)
 
-        self.set_points(pts, centroid)
+        if len(pts) > 0:
+            self.setPoints(pts, self.centroid)
 
-    """
-    Reset the poly coordinates.
-    """
-
-    def set_points(self, pts, centroid=None):
-
-        if not centroid == None:
+    def setPoints(self, pts, centroid=None):
+        """Reset the poly coordinates."""
+        if centroid:
             self.centroid = Point(centroid[0], centroid[1])
         else:
             self.centroid = None
 
-        self.minX = sys.maxint
-        self.minY = sys.maxint
-        self.maxX = sys.maxint * -1
-        self.maxY = sys.maxint * -1
+        self.minX = pow(2, 30)
+        self.minY = pow(2, 30)
+        self.maxX = pow(2, 30) * -1
+        self.maxY = pow(2, 30) * -1
 
         self.points = []
 
         for p in pts:
-            x, y = p
+            x = p.x
+            y = p.y
 
             if x < self.minX:
                 self.minX = x
@@ -49,22 +53,32 @@ class Polygon(object):
 
         self.mbr = Rectangle(Point(self.minX, self.minY), Point(self.maxX, self.maxY))
 
-    def get_points(self):
+    def getPoints(self):
+        """Get a plain list of tuple points
+        Params:
+            None
+        Returns:
+            points (List[tuples])
+        """
         generic = []
         for p in self.points:
-            generic.append(p.as_tuple())
+            generic.append(p.asTuple())
         return generic
 
-    # determine if a point is inside a given polygon or not
-    # Polygon is a list of (x,y) pairs.
-    def point_inside_polygon(self, p):
-
+    def pointInsidePolygon(self, p):
+        """Determine if a point is inside a given polygon or not.
+           Assuming Polygon is a list of (x,y) pairs.
+        Params:
+            p (Point)
+        Returns:
+            bool : True = point in polygon
+        """
         n = len(self.points)
         inside = False
 
-        p1x, p1y = self.points[0].as_tuple()
+        p1x, p1y = self.points[0].asTuple()
         for i in range(n + 1):
-            p2x, p2y = self.points[i % n].as_tuple()
+            p2x, p2y = self.points[i % n].asTuple()
             if p.y > min(p1y, p2y):
                 if p.y <= max(p1y, p2y):
                     if p.x <= max(p1x, p2x):
@@ -77,6 +91,7 @@ class Polygon(object):
         return inside
 
     def orderPoints(self):
+        """ """
         assert not self.centroid == None
 
         ptsDict = {}
@@ -94,7 +109,7 @@ class Polygon(object):
         http://softsurfer.com/Archive/algorithm_0101/algorithm_0101.htm#2D%20Polygons
         """
         area = 0.0
-        for i in xrange(-1, len(x) - 1):
+        for i in range(-1, len(x) - 1):
             area += x[i] * (y[i + 1] - y[i - 1])
         return area / 2.0
 
@@ -136,5 +151,10 @@ class Polygon(object):
 
 
 if __name__ == "__main__":
-    p = Polygon()
+    points = [Point(4, 5)]
+    for i in range(10):
+        points.append(Point(random.randint(1, 10), random.randint(1, 10)))
+    points.append(points[-1])
+
+    p = Polygon(points)
     print(p)

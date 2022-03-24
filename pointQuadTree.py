@@ -3,7 +3,7 @@
 from rich import print
 from point import Point
 from rectangle import *
-from random import random
+import random
 from random import choice
 
 width = 1024
@@ -15,8 +15,8 @@ class qtPoint(Point):
         Point.__init__(self, x, y)
         self.data = data
         self.color = color
-        self.dx = 1
-        self.dy = 1
+        self.dx = 3
+        self.dy = 3
         self.radius = radius
 
     def setRadius(self, r):
@@ -36,25 +36,25 @@ class qtPoint(Point):
 
     def update_position(self):
         if self.direction == "N":
-            self.y -= 1
+            self.y -= self.dy
         if self.direction == "NE":
-            self.y -= 1
-            self.x += 1
+            self.y -= self.dy
+            self.x += self.dx
         if self.direction == "E":
-            self.x += 1
+            self.x += self.dx
         if self.direction == "SE":
-            self.x += 1
-            self.y += 1
+            self.x += self.dx
+            self.y += self.dy
         if self.direction == "S":
-            self.y += 1
+            self.y += self.dy
         if self.direction == "SW":
-            self.x -= 1
-            self.y += 1
+            self.x -= self.dx
+            self.y += self.dy
         if self.direction == "W":
-            self.x -= 1
+            self.x -= self.dx
         if self.direction == "NW":
-            self.y -= 1
-            self.x -= 1
+            self.y -= self.dy
+            self.x -= self.dx
 
 
 class PointQuadTree(object):
@@ -77,18 +77,15 @@ class PointQuadTree(object):
         self.points = []
 
     def __str__(self):
-        return (
-            "\nnorthwest: %s,\nnorthEast: %s,\nsouthWest: %s,\nsouthEast: %s,\npoints: %s,\nbbox: %s,\nmaxPoints: %s,\nparent: %s"
-            % (
-                self.northWest,
-                self.northEast,
-                self.southWest,
-                self.southEast,
-                self.points,
-                self.bbox,
-                self.maxPoints,
-                self.parent,
-            )
+        return "\nnorthwest: %s,\nnorthEast: %s,\nsouthWest: %s,\nsouthEast: %s,\npoints: %s,\nbbox: %s,\nmaxPoints: %s,\nparent: %s" % (
+            self.northWest,
+            self.northEast,
+            self.southWest,
+            self.southEast,
+            self.points,
+            self.bbox,
+            self.maxPoints,
+            self.parent,
         )
 
     def reset(self, points):
@@ -136,16 +133,16 @@ class PointQuadTree(object):
         mX = (l + r) / 2
         mY = (t + b) / 2
         self.northEast = PointQuadTree(
-            Rectangle(Point(mX, t), Point(r, mY)), self.maxPoints, self.parent + 1
+            Rectangle(p1=Point(mX, t), p2=Point(r, mY)), self.maxPoints, self.parent + 1
         )
         self.southEast = PointQuadTree(
-            Rectangle(Point(mX, mY), Point(r, b)), self.maxPoints, self.parent + 1
+            Rectangle(p1=Point(mX, mY), p2=Point(r, b)), self.maxPoints, self.parent + 1
         )
         self.southWest = PointQuadTree(
-            Rectangle(Point(l, mY), Point(mX, b)), self.maxPoints, self.parent + 1
+            Rectangle(p1=Point(l, mY), p2=Point(mX, b)), self.maxPoints, self.parent + 1
         )
         self.northWest = PointQuadTree(
-            Rectangle(Point(l, t), Point(mX, mY)), self.maxPoints, self.parent + 1
+            Rectangle(p1=Point(l, t), p2=Point(mX, mY)), self.maxPoints, self.parent + 1
         )
 
     def searchBox(self, bbox):
@@ -282,18 +279,22 @@ if __name__ == "__main__":
 
     width = 1024
     height = 768
-    maxPoints = 500
+    maxPoints = 50
 
-    bbox = Rectangle(Point(0, 0), Point(width, height))
-    qt = PointQuadTree(bbox, 5, 0)
+    bbox = Rectangle(p1=Point(0, 0), p2=Point(width, height))
+    qt = PointQuadTree(bbox, 1, 0)
 
     dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
 
     id = 0
     while id < maxPoints:
-        x = int(width * random())
-        y = int(height * random())
-        p = qtPoint(x, y, id, (255, 255, 255))
+        r = random.randint(0, 255)
+        g = random.randint(0, 255)
+        b = random.randint(0, 255)
+        color = (r, g, b)
+        x = int(width * random.random())
+        y = int(height * random.random())
+        p = qtPoint(x, y, id, color, 3)
         p.set_dx_dy(3, 3)
         p.set_direction(choice(dirs))
         qt.insert(p)
@@ -311,8 +312,12 @@ if __name__ == "__main__":
 
         if pos:
             print(pos)
-            p = qtPoint(x, y, id, (0, 255, 0), 4)
-            p.set_dx_dy(3, 3)
+            r = random.randint(0, 255)
+            g = random.randint(0, 255)
+            b = random.randint(0, 255)
+            color = (0, 255, 0)
+            p = qtPoint(pos[0], pos[1], id, (r, g, b), 10)
+            p.set_dx_dy(10, 10)
             p.set_direction(choice(dirs))
             qt.insert(p)
             dPoints.append(p)
