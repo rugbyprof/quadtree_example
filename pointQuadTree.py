@@ -6,18 +6,75 @@ from rectangle import *
 from random import random
 from random import choice
 
+width = 1024
+height = 768
+
+
+class qtPoint(Point):
+    def __init__(self, x, y, data=None, color=(255, 255, 255), radius=2):
+        Point.__init__(self, x, y)
+        self.data = data
+        self.color = color
+        self.dx = 1
+        self.dy = 1
+        self.radius = radius
+
+    def setRadius(self, r):
+        self.radius = r
+
+    def set_dx_dy(self, dx, dy):
+        self.dx = dx
+        self.dy = dy
+
+    def setColor(self, color):
+        self.color = color
+
+    def set_direction(self, direction):
+        assert direction in ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+
+        self.direction = direction
+
+    def update_position(self):
+        if self.direction == "N":
+            self.y -= 1
+        if self.direction == "NE":
+            self.y -= 1
+            self.x += 1
+        if self.direction == "E":
+            self.x += 1
+        if self.direction == "SE":
+            self.x += 1
+            self.y += 1
+        if self.direction == "S":
+            self.y += 1
+        if self.direction == "SW":
+            self.x -= 1
+            self.y += 1
+        if self.direction == "W":
+            self.x -= 1
+        if self.direction == "NW":
+            self.y -= 1
+            self.x -= 1
+
 
 class PointQuadTree(object):
     def __init__(self, bbox, maxPoints, parent=0):
+        self.maxPoints = maxPoints
+        self.parent = parent
+        self.bboxOriginal = bbox
+        self.bbox = bbox
+
+        self.init()
+
+    def init(self):
+
+        self.parent = 0
         self.northEast = None
         self.southEast = None
         self.southWest = None
         self.northWest = None
-
+        self.bbox = self.bboxOriginal
         self.points = []
-        self.bbox = bbox
-        self.maxPoints = maxPoints
-        self.parent = parent
 
     def __str__(self):
         return (
@@ -33,6 +90,11 @@ class PointQuadTree(object):
                 self.parent,
             )
         )
+
+    def reset(self, points):
+        self.init()
+        for point in points:
+            self.insert(point)
 
     def insert(self, point):
         """
@@ -154,7 +216,7 @@ class PointQuadTree(object):
 
 def drawPoints(screen, points):
     for p in points:
-        pygame.draw.circle(screen, (255, 255, 255), [p.x, p.y], 2)
+        pygame.draw.circle(screen, p.color, [p.x, p.y], p.radius)
 
 
 def updatePoints(points, width, height):
@@ -193,6 +255,8 @@ def updatePoints(points, width, height):
         p.update_position()
         # pygame.draw.circle(screen, (255, 255, 255), [p.x, p.y], 2)
 
+    return points
+
 
 def drawRects(screen, rects):
     """left, top, width, height"""
@@ -221,34 +285,48 @@ if __name__ == "__main__":
     maxPoints = 500
 
     bbox = Rectangle(Point(0, 0), Point(width, height))
-    qt = PointQuadTree(bbox, 5, parent=0)
+    qt = PointQuadTree(bbox, 5, 0)
 
     dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
 
     id = 0
-    # while id < maxPoints:
-
-    while not done:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                done = True
-
+    while id < maxPoints:
         x = int(width * random())
         y = int(height * random())
-        p = Point(x, y, id)
+        p = qtPoint(x, y, id, (255, 255, 255))
         p.set_dx_dy(3, 3)
         p.set_direction(choice(dirs))
         qt.insert(p)
         dPoints.append(p)
         id += 1
 
-        bboxes = qt.getBBoxes()
+    while not done:
+        pos = None
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                done = True
+
+            if event.type == pygame.MOUSEBUTTONUP:
+                pos = pygame.mouse.get_pos()
+
+        if pos:
+            print(pos)
+            p = qtPoint(x, y, id, (0, 255, 0), 4)
+            p.set_dx_dy(3, 3)
+            p.set_direction(choice(dirs))
+            qt.insert(p)
+            dPoints.append(p)
+            id += 1
 
         screen.fill((0, 0, 0))
-        updatePoints(dPoints, width, height)
+
+        bboxes = qt.getBBoxes()
+        dPoints = updatePoints(dPoints, width, height)
+
         drawPoints(screen, dPoints)
         drawRects(screen, bboxes)
 
+        qt.reset(dPoints)
         # print(bboxes)
 
         pygame.display.flip()

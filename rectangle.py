@@ -47,8 +47,8 @@ class Rectangle:
         """
         Reset the rectangle coordinates.
         """
-        (x1, y1) = pt1.as_tuple()
-        (x2, y2) = pt2.as_tuple()
+        (x1, y1) = pt1.asTuple()
+        (x2, y2) = pt2.asTuple()
         self.x1 = x1
         self.y1 = y1
         self.x2 = x2
@@ -65,7 +65,7 @@ class Rectangle:
         """
         Return true if a point is inside the rectangle.
         """
-        x, y = pt.as_tuple()
+        x, y = pt.asTuple()
         return self.left <= x <= self.right and self.top <= y <= self.bottom
 
     def containsPoint(self, pt):
