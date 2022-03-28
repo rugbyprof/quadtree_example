@@ -38,6 +38,7 @@ class Rectangle:
 
         self.data = kwargs.get("data", {})
         self.parent = kwargs.get("parent", None)
+        self.color = kwargs.get("color", (0, 0, 0))
 
         self.setPoints(self.p1, self.p2)
         self.w = math.fabs(self.p1.x - self.p2.x)
@@ -134,6 +135,22 @@ class Rectangle:
         s += f"  {Point(self.right, self.bottom)}"
         s += " )"
         return s
+
+
+class Bounds(object):
+    """
+    A class more or so to put all the boundary values together. Friendlier than
+    using a map type.
+    """
+
+    def __init__(self, minx, miny, maxx, maxy):
+        self.minX = minx
+        self.minY = miny
+        self.maxX = maxx
+        self.maxY = maxy
+
+    def __repr__(self):
+        return f"({self.minX}, {self.minY}, {self.maxX}, {self.maxY})"
 
 
 if __name__ == "__main__":

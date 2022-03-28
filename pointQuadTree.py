@@ -1,60 +1,82 @@
 # from xml.sax import handler
 # from matplotlib.cbook import index_of
+# from jinja2 import pass_eval_context
 from rich import print
 from point import Point
 from rectangle import *
 import random
 from random import choice
 
-width = 1024
-height = 768
+# width = 1024
+# height = 768
 
 
-class qtPoint(Point):
-    def __init__(self, x, y, data=None, color=(255, 255, 255), radius=2):
-        Point.__init__(self, x, y)
-        self.data = data
-        self.color = color
-        self.dx = 3
-        self.dy = 3
-        self.radius = radius
+# class qtPoint(Point):
+#     def __init__(self, x, y, data=None, color=(255, 255, 255), radius=2):
+#         Point.__init__(self, x, y)
+#         self.data = data
+#         self.color = color
+#         self.dx = 3
+#         self.dy = 3
+#         self.radius = radius
 
-    def setRadius(self, r):
-        self.radius = r
+#     def setRadius(self, r):
+#         self.radius = r
 
-    def set_dx_dy(self, dx, dy):
-        self.dx = dx
-        self.dy = dy
+#     def set_dx_dy(self, dx, dy):
+#         self.dx = dx
+#         self.dy = dy
 
-    def setColor(self, color):
-        self.color = color
+#     def setColor(self, color):
+#         self.color = color
 
-    def set_direction(self, direction):
-        assert direction in ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+#     def set_direction(self, direction):
+#         assert direction in ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
 
-        self.direction = direction
+#         self.direction = direction
 
-    def update_position(self):
-        if self.direction == "N":
-            self.y -= self.dy
-        if self.direction == "NE":
-            self.y -= self.dy
-            self.x += self.dx
-        if self.direction == "E":
-            self.x += self.dx
-        if self.direction == "SE":
-            self.x += self.dx
-            self.y += self.dy
-        if self.direction == "S":
-            self.y += self.dy
-        if self.direction == "SW":
-            self.x -= self.dx
-            self.y += self.dy
-        if self.direction == "W":
-            self.x -= self.dx
-        if self.direction == "NW":
-            self.y -= self.dy
-            self.x -= self.dx
+#     def update_position(self):
+#         if self.direction == "N":
+#             self.y -= self.dy
+#         if self.direction == "NE":
+#             self.y -= self.dy
+#             self.x += self.dx
+#         if self.direction == "E":
+#             self.x += self.dx
+#         if self.direction == "SE":
+#             self.x += self.dx
+#             self.y += self.dy
+#         if self.direction == "S":
+#             self.y += self.dy
+#         if self.direction == "SW":
+#             self.x -= self.dx
+#             self.y += self.dy
+#         if self.direction == "W":
+#             self.x -= self.dx
+#         if self.direction == "NW":
+#             self.y -= self.dy
+#             self.x -= self.dx
+
+colorDict = {
+    "Black": (0, 0, 0),
+    "Red": (255, 0, 0),
+    "Lime": (0, 255, 0),
+    "Blue": (0, 0, 255),
+    "Cyan": (0, 255, 255),
+    "Magenta": (255, 0, 255),
+    "Silver": (192, 192, 192),
+    "Gray": (128, 128, 128),
+    "Maroon": (128, 0, 0),
+    "Olive": (128, 128, 0),
+    "Green": (0, 128, 0),
+    "Purple": (128, 0, 128),
+    "Teal": (0, 128, 128),
+    "Navy": (0, 0, 128),
+    "White": (255, 255, 255),
+    "Yellow": (255, 255, 0),
+}
+
+colorList = list(colorDict.values())
 
 
 class PointQuadTree(object):
@@ -63,12 +85,13 @@ class PointQuadTree(object):
         self.parent = parent
         self.bboxOriginal = bbox
         self.bbox = bbox
+        self.color = colorList[self.parent]
+        self.points = []
 
         self.init()
 
     def init(self):
 
-        self.parent = 0
         self.northEast = None
         self.southEast = None
         self.southWest = None
@@ -77,21 +100,27 @@ class PointQuadTree(object):
         self.points = []
 
     def __str__(self):
-        return "\nnorthwest: %s,\nnorthEast: %s,\nsouthWest: %s,\nsouthEast: %s,\npoints: %s,\nbbox: %s,\nmaxPoints: %s,\nparent: %s" % (
-            self.northWest,
-            self.northEast,
-            self.southWest,
-            self.southEast,
-            self.points,
-            self.bbox,
-            self.maxPoints,
-            self.parent,
+        return (
+            "\nnorthwest: %s,\nnorthEast: %s,\nsouthWest: %s,\nsouthEast: %s,\npoints: %s,\nbbox: %s,\nmaxPoints: %s,\nparent: %s"
+            % (
+                self.northWest,
+                self.northEast,
+                self.southWest,
+                self.southEast,
+                self.points,
+                self.bbox,
+                self.maxPoints,
+                self.parent,
+            )
         )
 
     def reset(self, points):
         self.init()
         for point in points:
-            self.insert(point)
+            if isinstance(point, Point):
+                self.insert(point)
+            else:
+                self.insert(Point(point.x, point.y, data=point.data))
 
     def insert(self, point):
         """
@@ -199,7 +228,7 @@ class PointQuadTree(object):
         """Print helper to draw tree"""
         bboxes = []
 
-        bboxes.append(self.bbox)
+        bboxes.append({"bbox": self.bbox, "color": self.color, "parent": self.parent})
 
         if not self.northWest == None:
             # ... search each child node in turn, merging with any existing results
@@ -211,133 +240,5 @@ class PointQuadTree(object):
         return bboxes
 
 
-def drawPoints(screen, points):
-    for p in points:
-        pygame.draw.circle(screen, p.color, [p.x, p.y], p.radius)
-
-
-def updatePoints(points, width, height):
-
-    old = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
-    new = ["S", "SW", "W", "NW", "N", "NE", "E", "SE"]
-
-    dx = 3
-    dy = 3
-    for p in points:
-        # p.update_position()
-        d = list(p.direction)
-        # print("+" * 20)
-        # print(d)
-        if p.x > width or p.x < 0:
-            i = p.direction.find("E")
-            if i >= 0:
-                d[i] = "W"
-
-            i = p.direction.find("W")
-            if i >= 0:
-                d[i] = "E"
-        if p.y > height or p.y < 0:
-            i = p.direction.find("N")
-            if i >= 0:
-                d[i] = "S"
-
-            i = p.direction.find("S")
-            if i >= 0:
-                d[i] = "N"
-
-        p.direction = "".join(d)
-        # print(p.direction)
-        # print("-" * 20)
-
-        p.update_position()
-        # pygame.draw.circle(screen, (255, 255, 255), [p.x, p.y], 2)
-
-    return points
-
-
-def drawRects(screen, rects):
-    """left, top, width, height"""
-    for r in rects:
-        l = r.left
-        t = r.top
-        w = r.w
-        h = r.h
-        pygame.draw.rect(screen, (255, 0, 0), pygame.Rect(l, t, w, h), 1)
-
-
 if __name__ == "__main__":
-    import pygame
-
-    dPoints = []
-    dRects = []
-
-    pygame.init()
-    width, height = (1024, 768)
-    screen = pygame.display.set_mode((width, height))
-    done = False
-    clock = pygame.time.Clock()
-
-    width = 1024
-    height = 768
-    maxPoints = 50
-
-    bbox = Rectangle(p1=Point(0, 0), p2=Point(width, height))
-    qt = PointQuadTree(bbox, 1, 0)
-
-    dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
-
-    id = 0
-    while id < maxPoints:
-        r = random.randint(0, 255)
-        g = random.randint(0, 255)
-        b = random.randint(0, 255)
-        color = (r, g, b)
-        x = int(width * random.random())
-        y = int(height * random.random())
-        p = qtPoint(x, y, id, color, 3)
-        p.set_dx_dy(3, 3)
-        p.set_direction(choice(dirs))
-        qt.insert(p)
-        dPoints.append(p)
-        id += 1
-
-    while not done:
-        pos = None
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                done = True
-
-            if event.type == pygame.MOUSEBUTTONUP:
-                pos = pygame.mouse.get_pos()
-
-        if pos:
-            print(pos)
-            r = random.randint(0, 255)
-            g = random.randint(0, 255)
-            b = random.randint(0, 255)
-            color = (0, 255, 0)
-            p = qtPoint(pos[0], pos[1], id, (r, g, b), 10)
-            p.set_dx_dy(10, 10)
-            p.set_direction(choice(dirs))
-            qt.insert(p)
-            dPoints.append(p)
-            id += 1
-
-        screen.fill((0, 0, 0))
-
-        bboxes = qt.getBBoxes()
-        dPoints = updatePoints(dPoints, width, height)
-
-        drawPoints(screen, dPoints)
-        drawRects(screen, bboxes)
-
-        qt.reset(dPoints)
-        # print(bboxes)
-
-        pygame.display.flip()
-        clock.tick(60)
-
-    # print(qt)
-    # res = qt.searchNeighbors(Point(70.0, 311.0))
-    # print(res)
-    # print(len(res))
+    pass

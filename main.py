@@ -1,275 +1,243 @@
-import math
-import random
-import numpy as np
-import time
-from pointQuadTree import *
-from rectangle import *
 import pygame
-from vector import Vector
+from rich import print
+from point import Point
+from ball import Ball
+import random
+from rectangle import Rectangle
+from rectangle import Bounds
+from pointQuadTree import PointQuadTree
+import sys
+
+# --- Global constants ---
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+
+BUFFER = 20
+
+SCREEN_WIDTH = 700
+SCREEN_HEIGHT = 500
+
+TREE_WIDTH = SCREEN_WIDTH - BUFFER
+TREE_HEIGHT = SCREEN_HEIGHT - BUFFER
 
 
-class Ball:
-    """
-    Ball is an extension of a point. It doesn't truly "extend" the point class but it
-    probably should have! Having said that, I probably should extend the VectorOps class
-    as well.
-
-    @method: destination       -- private method to give the bearing going from p1 -> p2
-    @method: move              -- length in this context
-    @method: xInBounds         -- Helper class to check ... I'll let you guess
-    @method: yInBounds         -- Same as previous just vertically :)
-
-    This class is used as follows:
-
-    Given a point, p1, I want to move it somewhere, anywhere. So I do the following:
-
-    1) Create a random point somewhere else on the screen / world / board:
-            distance = 100
-            degrees = math.radians(random.randint(0,360))
-            p2 = destination(distance,degrees)
-
-    2) Now I can calculate a vector between P1 and P2 at a given velocity (scalar value
-        to adjust speed)
-
-            velocity = random.randint(1,MaxSpeed) # 1-15 or 20
-            vectorOps = VectorOps(p1,p2,velocity)
-
-    3) Finally I have a "step" (or incorrectly coined as a motion vector) that as applied to
-        p1 will move it toward p2 at the given step.
-
-            p1.x += vectorOps.dx
-            p1.y += vectorOps.dy
+class TreeDriver(object):
+    """This would normally be a game class. But, we need a tree handler so
+    I'm repurposing a game class I found here:
+    http://programarcadegames.com/python_examples/f.php?file=game_class_example.py
     """
 
-    def __init__(self, center, radius, velocity=1, color="#000"):
-        self.center = center
-        self.radius = radius
-        self.velocity = velocity
-        self.x = center.x
-        self.y = center.y
-        self.center = center
-        self.bearing = math.radians(random.randint(0, 360))
-        self.dest = self.destination(100, self.bearing)
-        self.vector = Vector(p1=self.center, p2=self.dest, velocity=self.velocity)
-        self.color = color
+    def __init__(self, **kwargs):
+        """Init driver class"""
 
-    """
-    Given a distance and a bearing find the point: P2 (where we would end up).
-    """
+        self.screen = kwargs.get("screen", None)  # screen
+        if not self.screen:
+            print("Need a pygame screen!")
+            sys.exit()
+        self.width = kwargs.get("width", TREE_WIDTH)  # tree bbox width
+        self.height = kwargs.get("height", TREE_HEIGHT)  # tree bbox height
+        self.primePoints = kwargs.get("primePoints", 0)  # prime tree with N points
+        self.loadPoints = kwargs.get("loadPoints", [])  # load a list of points
+        self.ballColor = kwargs.get("ballColor", (0, 255, 0))  # generic ball color
 
-    def destination(self, distance, bearing):
-        cosa = math.sin(bearing)
-        cosb = math.cos(bearing)
-        return Point(self.x + (distance * cosa), self.y + (distance * cosb))
+        self.bbox = Rectangle(p1=Point(0, 0), p2=Point(self.width, self.height))
+        self.tree = PointQuadTree(self.bbox, 1, 0)
+        self.pid = 0
+        self.balls = []
+        self.rects = []
+        self.c = 0
 
-    """
-    Applies the "step" to current location and checks for out of bounds
-    """
+        # if list or number of points passed in, call init function
+        if len(self.loadPoints) > 0:
+            self.initPoints(self.loadPoints)
+        elif self.primePoints > 0:
+            self.initPoints(self.primePoints)
 
-    def move(self, bounds):
-        x = self.x
-        y = self.y
+    def initPoints(self, points):
+        """Load quadtree with any pre-existing points"""
 
-        # Move temporarily
-        x += self.vectorOps.dx
-        y += self.vectorOps.dy
+        # if points == int then we load "points" number of balls into the tree
+        if isinstance(points, int):
+            while self.pid < points:
+                x = int(self.width * random.random())
+                y = int(self.height * random.random())
+                p = Ball(
+                    x, y, data={"id": self.pid}, color=self.color, radius=3, dx=3, dy=3
+                )
+                self.tree.insert(p)
+                self.balls.append(p)
+                self.pid += 1
+        # else if points is a "list" of points or balls, we handle that as well
+        elif isinstance(points, list):
+            for p in points:
+                if isinstance(p, Ball):
+                    p.data["id"] = self.pid
+                    self.tree.insert(p)
+                    self.balls.append(p)
+                elif isinstance(p, Point):
+                    p.data["id"] = self.pid
+                    p = Ball(p.x, p.y, data=p.data)
+                self.tree.insert(p)
+                self.balls.append(p)
+                self.pid += 1
+        self.rects = self.tree.getBBoxes()
 
-        # Check if in bounds
-        # If it's not, then change direction
-        if not self._xInBounds(bounds, x):
-            self.vectorOps.dx *= -1
-            self._change_bearing(math.pi)
-        if not self._yInBounds(bounds, y):
-            self.vectorOps.dy *= -1
-
-        # Move any way because If we hit boundaries then we'll
-        # go in the other direction.
-        self.x += self.vectorOps.dx
-        self.y += self.vectorOps.dy
-
-        # Update center value of ball
-        self.center.x = self.x
-        self.center.y = self.y
-
-    def _xInBounds(self, bounds, x):
-        if x >= bounds.maxX or x <= bounds.minX:
-            return False
-
-        return True
-
-    def _yInBounds(self, bounds, y):
-        if y >= bounds.maxY or y <= bounds.minY:
-            return False
-
-        return True
-
-    def _change_bearing(self, change):
+    def captureEvents(self):
+        """Handles events like mouse clicks and closing game window.
+        Returns:
+            dictionary :  a dictionary with keys indicating events that happened
+        Examples:
+            returns a mouse click event
+            {
+                "mouseUp" : (345,23)
+            }
+            returns a keyboard or kill window event
+            {
+                "quit" : True
+            }
         """
-        Change Bearing
+        eventHandler = {}
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                eventHandler["quit"] = True
+
+            if event.type == pygame.MOUSEBUTTONUP:
+                eventHandler["mouseUp"] = True
+                eventHandler["data"] = pygame.mouse.get_pos()
+
+            if event.type == pygame.KEYDOWN:
+                eventHandler["keydown"] = event.key
+
+        return eventHandler
+
+    def updateLogic(self, events):
         """
-        self.bearing = (self.bearing + change) % (2 * math.pi)
-
-    def changeSpeed(self, new_velocity):
-        self.dest = self.destination(100, self.bearing)
-        self.velocity = new_velocity
-        self.vectorOps = Vector(p1=self.center, p2=self.dest, velocity=self.velocity)
-
-    def as_tuple(self):
+        This method is run each time through the frame. It
+        updates positions and checks for collisions.
+        Params:
+            events (dict) : event dictionary created in handleEvents
         """
-        @returns a tuple (x, y)
+        if "mouseUp" in events:
+            x, y = events["data"]
+            self.balls.append(Ball(x, y, radius=5, color=(128, 0, 128)))
+        # print(events)
+        # Move all the balls or sprites
+
+        # check for collision
+
+        # handle collisions or stuff
+
+    def displayFrame(self):
+        """Display everything to the screen for the game.
+        Params:
+            screen (pygame window) : draw stuff to this object
         """
-        return (self.x, self.y)
+        self.screen.fill(WHITE)
+        # points = self.tree.points
 
-    def _str__(self):
-        return "[\n center: %s,\n radius: %s,\n vector: %s,\n speed: %s\n ]" % (
-            self.center,
-            self.radius,
-            self.vectorOps,
-            self.velocity,
-        )
+        self.tree.reset(self.balls)
 
-    def __repr__(self):
-        return "[\n center: %s,\n radius: %s,\n vector: %s,\n speed: %s\n ]" % (
-            self.center,
-            self.radius,
-            self.vectorOps,
-            self.velocity,
-        )
-
-
-class Bounds(object):
-    """
-    A class more or so to put all the boundary values together. Friendlier than
-    using a map type.
-    """
-
-    def __init__(self, minx, miny, maxx, maxy):
-        self.minX = minx
-        self.minY = miny
-        self.maxX = maxx
-        self.maxY = maxy
-
-    def __repr__(self):
-        return "[%s %s %s %s]" % (self.minX, self.minY, self.maxX, self.maxY)
-
-
-class Driver:
-    """
-    The driver class that uses pygame
-
-    Dependencies:
-        pygame
-        Numpy
-        Point
-        Rectangle
-    """
-
-    def __init__(self):
-        self.bounds = Bounds(0, 0, self.width, self.height)
-        self.BallSpeeds = np.arange(1, 4, 1)
-        self.numBalls = 50
-        self.qt = PointQuadTree(
-            Rectangle(Point(0, 0), Point(self.width, self.height)), 1
-        )
-        self.BallSize = 5
-        self.halfSize = self.BallSize / 2
-        self.Balls = []
-        self.boxes = []
-        self.freeze = False
-
-        for i in range(self.numBalls):
-
-            speed = random.choice(self.BallSpeeds)
-            if i == 0:
-                color = "#00F"
-            else:
-                color = "#F00"
-            r = Ball(self.getRandomPosition(), self.BallSize, speed, color)
-            self.Balls.append(r)
-            self.qt.insert(r)
-
-    def update(self):
-        """
-        Update happens every ? milliseconds. Its not to bad.
-        """
-        if not self.freeze:
-            self.moveBalls()
-        self.clear_rect(0, 0, self.width, self.height)
         self.drawBalls()
-        self.drawBoxes()
-        # time.sleep(.5)
+        self.drawRects()
 
-    def checkCollisions(self, r):
-        """
-        Not Implemented fully. The goal is to use the quadtree to check to see which
-        balls collide, then change direction.
-        """
-        # box = Rectangle(Point(r.center.x-self.halfSize,r.center.y-self.halfSize),Point(r.center.x+self.halfSize,r.center.y+self.halfSize))
-        # boxes  = self.qt.searchBox(box)
-        # boxes.sort(key=lambda tup: tup[1],reverse=True)
-        # #print boxes
-        # #print
-        pass
+        pygame.display.flip()
 
-    def getRandomPosition(self):
+    def gameOver(self):
+        """Do stuff like below if your game is over
+        Params:
+            screen (pygame window) : draw stuff to this object
         """
-        Generate some random point somewhere within the bounds of the canvas.
-        """
-        x = random.randint(0 + self.BallSize, int(self.width) - self.BallSize)
-        y = random.randint(0 + self.BallSize, int(self.height) - self.BallSize)
-        return Point(x, y)
-
-    def drawBoxes(self):
-        """
-        Draw the bounding boxes fetched from the quadtree
-        """
-        boxes = self.qt.getBBoxes()
-        for box in boxes:
-            self.draw_rect(box.left, box.top, box.w, box.h)
+        # font = pygame.font.Font("Serif", 25)
+        font = pygame.font.SysFont("serif", 25)
+        text = font.render("Game Over, click to restart", True, BLACK)
+        center_x = (TREE_WIDTH // 2) - (text.get_width() // 2)
+        center_y = (TREE_HEIGHT // 2) - (text.get_height() // 2)
+        self.screen.blit(text, [center_x, center_y])
 
     def drawBalls(self):
-        """
-        Draw the balls :)
-        """
-        for r in self.Balls:
-            self.fill_circle(r.x, r.y, r.radius, r.color)
+        for ball in self.balls:
+            print(self.screen, ball.color, [ball.x, ball.y], ball.radius)
+            pygame.draw.circle(self.screen, ball.color, [ball.x, ball.y], ball.radius)
 
-    def moveBalls(self):
-        """
-        Moves the balls by applying my super advanced euclidian based geometric
-        vector functions to my balls. By super advanced I mean ... not.
-        """
-        self.qt = PointQuadTree(
-            Rectangle(Point(0, 0), Point(self.width, self.height)), 1
-        )
-        for r in self.Balls:
-            self.checkCollisions(r)
-            r.move(self.bounds)
-            self.qt.insert(r)
+    def drawRects(self):
+        """left, top, width, height"""
+        for rect in self.rects:
+            c = rect["color"]
+            r = rect["bbox"]
+            p = rect["parent"]
+            l = r.left + BUFFER // 2
+            t = r.top + BUFFER // 2
+            w = r.w
+            h = r.h
 
-    def on_click(self, InputEvent):
-        """
-        Toggles movement on and off
-        """
-        if self.freeze == False:
-            self.freeze = True
-        else:
-            self.freeze = False
-
-    def on_key_down(self, InputEvent):
-        """
-        Dbl Click will speed balls up by some factor
-        Shift Dbl Click will slow balls down by same factor
-        """
-        # User hits the UP arrow
-        if InputEvent.key_code == 38:
-            print(self.Balls[0].bearing)
-            for r in self.Balls:
-                r.changeSpeed(r.velocity * 1.25)
-        # User hits the DOWN arrow
-        if InputEvent.key_code == 40:
-            pass
+            print(self.c)
+            self.c += 1
+            pygame.draw.rect(self.screen, c, pygame.Rect(l, t, w, h), 1)
 
 
+def initSomeBalls(bounds=Bounds(0, 0, TREE_WIDTH, TREE_HEIGHT), n=10):
+    """Randomly generate some balls to load into the quadtree"""
+    balls = []
+    for i in range(n):
+        x = random.randint(bounds.minX, bounds.maxX)
+        y = random.randint(bounds.minY, bounds.maxY)
+        balls.append(Ball(x, y, radius=5, color=(128, 0, 128)))
+
+    return balls
+
+
+def main():
+    """Main program function that does most things pygame"""
+
+    # Initialize Pygame and set up the window
+    pygame.init()
+
+    # basic window setup with size and a bounds class
+    # for the bouncy balls
+    size = [SCREEN_WIDTH, SCREEN_HEIGHT]
+    bounds = Bounds(0, 0, TREE_WIDTH, TREE_HEIGHT)
+    screen = pygame.display.set_mode(size)
+
+    # title the game window, and make the mouse show up
+    pygame.display.set_caption("Quadtree Demo")
+    pygame.mouse.set_visible(True)
+
+    # Game loop boolean and instance of the pygame clock
+    keepLooping = True
+    clock = pygame.time.Clock()
+
+    #####################################################################
+    # Create an instance of the Game class that drives
+    # this whole mess.
+    driver = TreeDriver(screen=screen, loadPoints=initSomeBalls(bounds, 1))
+
+    #####################################################################
+    # Main game loop
+    while keepLooping:
+
+        # Process events (keystrokes, mouse clicks, etc)
+        events = driver.captureEvents()
+
+        # some quit event happened so break out
+        if "quit" in events:
+            break
+
+        # Update object positions, check for collisions
+        driver.updateLogic(events)
+
+        # Draw the current frame
+        driver.displayFrame()
+
+        # Pause for the next frame
+        clock.tick(60)
+
+    # Close window and exit
+    pygame.quit()
+
+
+# Call the main function, start up the game
 if __name__ == "__main__":
-    pass
+    main()

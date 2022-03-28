@@ -15,9 +15,10 @@ class Ball(Point):
     @method: xInBounds         -- Helper class to check ... I'll let you guess
     @method: yInBounds         -- Same as previous just vertically :)
 
-    This class is used as follows:
+    This class is used to move a ball (circle) in a better manner than simply adding or
+    subtracting values to the x,y coordinates. Below is a walkthrough.
 
-    Given a point, p1, I want to move it somewhere, anywhere. So I do the following:
+    Given a point: p1
 
     1) Create a random point somewhere else on the screen / world / board:
             distance = 100
@@ -30,8 +31,7 @@ class Ball(Point):
             velocity = random.randint(1,MaxSpeed) # 1-15 or 20
             vectorOps = VectorOps(p1,p2,velocity)
 
-    3) Finally I have a "step" (or incorrectly coined as a motion vector) that as applied to
-        p1 will move it toward p2 at the given step.
+    3) Finally I have a "step" that as applied to `p1` will move it toward `p2` at the given step.
 
             p1.x += vector.dx
             p1.y += vector.dy
@@ -39,10 +39,11 @@ class Ball(Point):
 
     def __init__(self, *args, **kwargs):
         Point.__init__(self, *args, **kwargs)
+
         self.center = kwargs.get("center", None)
         self.velocity = kwargs.get("velocity", 1)
         self.radius = kwargs.get("radius", 1)
-        self.color = kwargs.get("color", (255, 255, 255))
+        self.color = kwargs.get("color", (0, 0, 0))
 
         self.direction = kwargs.get("direction", random.choice(dirs))
         self.dx = kwargs.get("dx", 1)
@@ -50,7 +51,7 @@ class Ball(Point):
 
         if not self.center:
             self.center = Point(x=self.x, y=self.y)
-        print(self.center)
+        # print(self.center)
 
         self.bearing = math.radians(random.randint(0, 360))
         self.dest = self.destination(100, self.bearing)
@@ -124,20 +125,25 @@ class Ball(Point):
         self.vector = Vector(self.center, self.dest, velocity=self.velocity)
 
     def _str__(self):
-        return "[\n center: %s,\n radius: %s,\n vector: %s,\n speed: %s\n ]" % (
-            self.center,
-            self.radius,
-            self.vector,
-            self.velocity,
-        )
+        s = f"[\n"
+        s += f"  center: {self.center}\n"
+        s += f"  radius: {self.radius}\n"
+        s += f"  vector: {self.vector}\n"
+        s += f"  velocity: {self.velocity,}\n"
+        s += f"  color: {self.color}\n"
+        s += "]"
+        return s
 
     def __repr__(self):
-        return "[\n center: %s,\n radius: %s,\n vector: %s,\n speed: %s\n ]" % (
-            self.center,
-            self.radius,
-            self.vector,
-            self.velocity,
-        )
+        s = self.__class__.__name__
+        s += f"[\n"
+        s += f"  center: {self.center}\n"
+        s += f"  radius: {self.radius}\n"
+        s += f"  vector: {self.vector}\n"
+        s += f"  velocity: {self.velocity,}\n"
+        s += f"  color: {self.color}\n"
+        s += "]"
+        return s
 
     def setColor(self, color):
         self.color = color
@@ -168,22 +174,6 @@ class Ball(Point):
         if self.direction == "NW":
             self.y -= 1
             self.x -= 1
-
-
-class Bounds(object):
-    """
-    A class more or so to put all the boundary values together. Friendlier than
-    using a map type.
-    """
-
-    def __init__(self, minx, miny, maxx, maxy):
-        self.minX = minx
-        self.minY = miny
-        self.maxX = maxx
-        self.maxY = maxy
-
-    def __repr__(self):
-        return f"({self.minX}, {self.minY}, {self.maxX}, {self.maxY})"
 
 
 if __name__ == "__main__":
